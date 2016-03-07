@@ -26,6 +26,8 @@ Then run the following command on the command line:
 
     ./bin/python googlelogin.py cookies.txt
 
+Next, use that cookies.txt with curl, wget or whatever.
+
 ### Why didn't you create a normal python package on pypi?
 
 I use selenium and phantomjs for the Google login which requires nodejs so a
