@@ -1,0 +1,11 @@
+*.log
+*.pyc
+*.swp
+cookies.txt
+
+# buildout
+.installed.cfg
+bin
+develop-eggs
+eggs
+parts
