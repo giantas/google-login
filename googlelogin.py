@@ -2,13 +2,14 @@ import sys
 import re
 import netrc
 import logging
-import cookielib
 
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+from PatchedMozillaCookieJar import MozillaCookieJar
 
 __all__ = ['Session', 'get_session']
 
@@ -81,13 +82,13 @@ class Session(requests.Session):
         return not "Sign in" in response.text
 
     def save(self, filename):
-        cj = cookielib.MozillaCookieJar(filename)
+        cj = MozillaCookieJar(filename)
         for cookie in self.cookies:
             cj.set_cookie(cookie)
         cj.save(ignore_discard=True, ignore_expires=True)
 
     def load(self, filename):
-        cj = cookielib.MozillaCookieJar(filename)
+        cj = MozillaCookieJar(filename)
         cj.load(ignore_discard=True, ignore_expires=True)
         for cookie in cj:
             self.cookies.set_cookie(cookie)
