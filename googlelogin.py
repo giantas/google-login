@@ -2,6 +2,7 @@ import sys
 import re
 import netrc
 import logging
+import argparse
 
 import requests
 from selenium import webdriver
@@ -38,6 +39,10 @@ def copy_cookies_to_session(driver, session):
 class Session(requests.Session):
     """A Google session"""
 
+    def __init__(self, *args, **kwargs):
+        super(Session, self).__init__(*args, **kwargs)
+        self.url = "https://console.developers.google.com"
+
     def find_sign_in(self, driver):
         conditions = [
             EC.presence_of_element_located((By.PARTIAL_LINK_TEXT, "Sign in")),
@@ -52,11 +57,12 @@ class Session(requests.Session):
                 break
         return sign_in
 
-    def login(self, username, password):
+    def login(self, username, password, url=None):
+        if url is not None:
+            self.url = url
         driver = setup_webdriver()
         try:
-            url = "https://accounts.google.com/login"
-            driver.get(url)
+            driver.get(self.url)
             driver.find_element_by_id("Email").clear()
             driver.find_element_by_id("Email").send_keys(username)
             try:
@@ -77,9 +83,12 @@ class Session(requests.Session):
             driver.quit()
 
     def is_logged_in(self):
-        url = "https://myaccount.google.com/"
-        response = self.get(url)
-        return not "Sign in" in response.text
+        response = self.get(self.url, allow_redirects=False)
+        if response.status_code == 302:
+            login_url = "https://accounts.google.com/ServiceLogin"
+            return not response.headers['location'].startswith(login_url)
+        else:
+            return response.status_code == 200
 
     def save(self, filename):
         cj = MozillaCookieJar(filename)
@@ -94,7 +103,7 @@ class Session(requests.Session):
             self.cookies.set_cookie(cookie)
 
 
-def get_session(cookies_path="cookies.txt"):
+def get_session(cookies_path="cookies.txt", url=None):
     username, _, password = netrc.netrc().authenticators("google.com")
     session = Session()
     logger.debug("trying to load saved session")
@@ -103,14 +112,14 @@ def get_session(cookies_path="cookies.txt"):
     except IOError:
         logger.debug("error loading saved session")
         logger.debug("logging in")
-        session.login(username, password)
+        session.login(username, password, url=url)
         session.save(cookies_path)
     else:
         logger.debug("loaded saved session")
         logger.debug("are we still logged in?")
         if not session.is_logged_in():
             logger.debug("no so logging in")
-            session.login(username, password)
+            session.login(username, password, url=url)
             logger.debug("saving session")
             session.save(cookies_path)
         else:
@@ -121,8 +130,11 @@ def get_session(cookies_path="cookies.txt"):
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    cookies_path = argv[1]
-    session = get_session(cookies_path)
+    parser = argparse.ArgumentParser(description='Login to Google')
+    parser.add_argument('cookies_path', help="path for cookies.  usually cookies.txt")
+    parser.add_argument('--url', help="URL of Google resource you're trying to access")
+    args = parser.parse_args(argv[1:])
+    session = get_session(args.cookies_path, url=args.url)
 
 
 if __name__ == '__main__':
