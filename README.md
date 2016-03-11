@@ -24,7 +24,7 @@ Put your Google credentials in your `$HOME/.netrc` file:
 
 Then run the following command on the command line:
 
-    ./bin/python googlelogin.py cookies.txt
+    ./bin/python googlelogin.py --url http://gmail.com cookies.txt
 
 Next, use that cookies.txt with curl, wget or whatever.
 
