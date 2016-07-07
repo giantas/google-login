@@ -76,6 +76,7 @@ class Session(requests.Session):
                 passwd.send_keys(password)
             driver.find_element_by_id("signIn").click()
             copy_cookies_to_session(driver, self)
+            assert self.is_logged_in()
         except:
             driver.save_screenshot('/tmp/googlelogin_problem.png')
             raise
