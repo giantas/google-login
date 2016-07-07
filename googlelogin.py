@@ -104,9 +104,9 @@ class Session(requests.Session):
             self.cookies.set_cookie(cookie)
 
 
-def get_session(cookies_path="cookies.txt", url=None):
+def get_session(cookies_path="cookies.txt", url=None, cls=Session):
     username, _, password = netrc.netrc().authenticators("google.com")
-    session = Session()
+    session = cls()
     logger.debug("trying to load saved session")
     try:
         session.load(cookies_path)
